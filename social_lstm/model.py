@@ -159,7 +159,7 @@ class SocialLSTMModel:
         self.final_output = self.initial_output
 
         self.gradients = tf.gradients(self.cost, vars)
-        grads, _ = tf.clip_by_global_norm(self.gradients, args.grad_clip)
+        grads, _ = tf.clip_by_global_norm(self.gradients, args.gradient_clip)
         optimizer = tf.train.RMSPropOptimizer(self.lr)
         self.train_op = optimizer.apply_gradients(zip(grads, vars))
 
