@@ -48,7 +48,7 @@ def train(args):
     config.gpu_options.allow_growth = True
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
-        saver = tf.train.Saver(tf.all_variables)
+        saver = tf.train.Saver(tf.all_variables())
         best_validate_loss = 100
         best_epoch = 0
 
