@@ -154,7 +154,7 @@ class DataLoader:
 
                 for seq in range(self.seq_length):
                     this_seq_source_frame_data = seq_source_frame_data[seq, :]
-                    this_seq_target_frame_data = seq_target_frame_data[seq + 1, :]
+                    this_seq_target_frame_data = seq_target_frame_data[seq, :]
                     for index, ped_id in enumerate(ped_in_sequence):
                         if ped_id == 0:
                             continue
