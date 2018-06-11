@@ -18,7 +18,7 @@ class SocialLSTMModel:
         #############################################################################
 
         # LSTM cell definition
-        with tf.name_scope("LSTM_cell"):
+        with tf.variable_scope("LSTM_cell"):
             cell = tf.nn.rnn_cell.BasicLSTMCell(args.lstm_num, state_is_tuple=False)
 
         # frame * ped * (ped_id, x, y)

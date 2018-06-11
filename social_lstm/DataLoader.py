@@ -70,10 +70,10 @@ class DataLoader:
                 ped_pos.append((ped, current_x, current_y))
 
             ped_pos = np.array(ped_pos)
-            if (index < frame_list - validate_num_frames) or self.infer:
+            if (index < num_frames - validate_num_frames) or self.infer:
                 training_frame_data[index, :len(peds_in_this_frame), :] = ped_pos
             else:
-                validate_frame_data[index - validate_num_frames, :len(peds_in_this_frame), :] = ped_pos
+                validate_frame_data[index - (num_frames - validate_num_frames), :len(peds_in_this_frame), :] = ped_pos
 
         f = open(transformed_data_path, "wb")
         pickle.dump((training_frame_data, frame_list, num_peds_data, validate_frame_data), f)

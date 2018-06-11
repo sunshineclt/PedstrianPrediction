@@ -3,6 +3,8 @@ import argparse
 from social_lstm.DataLoader import DataLoader
 from social_lstm.model import SocialLSTMModel
 import time
+import os
+from social_lstm.grid import get_sequence_grid_mask
 
 
 def main():
@@ -37,7 +39,7 @@ def main():
 
 def train(args):
     data_loader = DataLoader(args.batch_size,
-                             args.seq_lengths,
+                             args.seq_length,
                              args.max_num_peds,
                              force_pre_process=True,
                              infer=False)
@@ -81,7 +83,7 @@ def train(args):
 
                     dataset_data = [640, 480]
 
-                    grid_batch = getSequenceGridMask(x_batch, dataset_data, args.neighborhood_size, args.grid_size)
+                    grid_batch = get_sequence_grid_mask(x_batch, dataset_data, args.neighborhood_size, args.grid_size)
 
                     # Feed the source, target data
                     feed = {model.input_data: x_batch, model.target_data: y_batch, model.grid_data: grid_batch}
@@ -91,38 +93,32 @@ def train(args):
                     loss_batch += train_loss
 
                 end = time.time()
-                loss_batch = loss_batch / data_loader.batch_size
+                loss_batch /= data_loader.batch_size
                 loss_epoch += loss_batch
                 print(
-                    "{}/{} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}"
-                        .format(
-                        e * data_loader.num_batches + b,
-                        args.num_epochs * data_loader.num_batches,
+                    "{}/{} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}".format(
+                        e * data_loader.num_training_batch + b,
+                        args.num_epochs * data_loader.num_training_batch,
                         e,
                         loss_batch, end - start))
 
                 # Save the model if the current epoch and batch number match the frequency
-                '''
-                if (e * data_loader.num_batches + b) % args.save_every == 0 and ((e * data_loader.num_batches + b) > 0):
-                    checkpoint_path = os.path.join('save', 'social_model.ckpt')
-                    saver.save(sess, checkpoint_path, global_step=e * data_loader.num_batches + b)
-                    print("model saved to {}".format(checkpoint_path))
-                '''
-            loss_epoch /= data_loader.num_batches
-            log_file_curve.write(str(e) + ',' + str(loss_epoch) + ',')
-            print
-            '*****************'
+                # if (e * data_loader.num_training_batch + b) % args.save_freq == 0 and ((e * data_loader.num_training_batch + b) > 0):
+                #     checkpoint_path = os.path.join('save', 'social_model.ckpt')
+                #     saver.save(sess, checkpoint_path, global_step=e * data_loader.num_training_batch + b)
+                #     print("model saved to {}".format(checkpoint_path))
+
+            loss_epoch /= data_loader.num_training_batch
 
             # Validation
-            data_loader.reset_batch_pointer(valid=True)
+            data_loader.reset_batch_pointer(validate=True)
             loss_epoch = 0
 
-            for b in range(data_loader.num_batches):
+            for b in range(data_loader.num_validate_batch):
 
                 # Get the source, target and dataset data for the next batch
                 # x, y are input and target data which are lists containing numpy arrays of size seq_length x maxNumPeds x 3
-                # d is the list of dataset indices from which each batch is generated (used to differentiate between datasets)
-                x, y, d = data_loader.next_valid_batch()
+                x, y = data_loader.next_validate_batch()
 
                 # variable to store the loss for this batch
                 loss_batch = 0
@@ -133,14 +129,11 @@ def train(args):
                     # seq_length long consecutive frames in the dataset
                     # x_batch, y_batch would be numpy arrays of size seq_length x maxNumPeds x 3
                     # d_batch would be a scalar identifying the dataset from which this sequence is extracted
-                    x_batch, y_batch, d_batch = x[batch], y[batch], d[batch]
+                    x_batch, y_batch = x[batch], y[batch]
 
-                    if d_batch == 0 and datasets[0] == 0:
-                        dataset_data = [640, 480]
-                    else:
-                        dataset_data = [720, 576]
+                    dataset_data = [640, 480]
 
-                    grid_batch = getSequenceGridMask(x_batch, dataset_data, args.neighborhood_size, args.grid_size)
+                    grid_batch = get_sequence_grid_mask(x_batch, dataset_data, args.neighborhood_size, args.grid_size)
 
                     # Feed the source, target data
                     feed = {model.input_data: x_batch, model.target_data: y_batch, model.grid_data: grid_batch}
@@ -152,24 +145,18 @@ def train(args):
                 loss_batch = loss_batch / data_loader.batch_size
                 loss_epoch += loss_batch
 
-            loss_epoch /= data_loader.valid_num_batches
+            loss_epoch /= data_loader.num_validate_batch
 
             # Update best validation loss until now
-            if loss_epoch < best_val_loss:
-                best_val_loss = loss_epoch
+            if loss_epoch < best_validate_loss:
+                best_validate_loss = loss_epoch
                 best_epoch = e
 
             print('(epoch {}), valid_loss = {:.3f}'.format(e, loss_epoch))
-            print
-            'Best epoch', best_epoch, 'Best validation loss', best_val_loss
-            log_file_curve.write(str(loss_epoch) + '\n')
-            print
-            '*****************'
+            print('Best epoch', best_epoch, 'Best validation loss', best_validate_loss)
 
             # Save the model after each epoch
-            print
-            'Saving model'
-            checkpoint_path = os.path.join(save_directory, 'social_model.ckpt')
+            checkpoint_path = os.path.join("save/", 'social_model.ckpt')
             saver.save(sess, checkpoint_path, global_step=e)
             print("model saved to {}".format(checkpoint_path))
 
