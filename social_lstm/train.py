@@ -4,6 +4,7 @@ from social_lstm.DataLoader import DataLoader
 from social_lstm.model import SocialLSTMModel
 import time
 import os
+import pickle
 from social_lstm.grid import get_sequence_grid_mask
 
 
