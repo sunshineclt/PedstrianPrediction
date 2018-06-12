@@ -104,7 +104,7 @@ def main():
     dataset = [sample_args.test_dataset]
 
     # Create a SocialDataLoader object with batch_size 1 and seq_length equal to observed_length + pred_length
-    data_loader = DataLoader(1, sample_args.pred_length + sample_args.obs_length, saved_args.max_num_peds, dataset, True, infer=True)
+    data_loader = DataLoader(1, sample_args.pred_length + sample_args.obs_length, saved_args.max_num_peds, dataset, force_pre_process=True, infer=True)
 
     # Reset all pointers of the data_loader
     data_loader.reset_batch_pointer()
