@@ -45,7 +45,7 @@ def train(args):
                              infer=False)
 
     with open(os.path.join('./save/', 'social_config.pkl'), 'wb') as f:
-    pickle.dump(args, f)
+        pickle.dump(args, f)
 
     model = SocialLSTMModel(args)
     config = tf.ConfigProto()
