@@ -114,9 +114,9 @@ def main():
     # Variable to maintain total error
     total_error = 0
     # For each batch
-    for b in range(data_loader.num_validate_batch):
+    for b in range(data_loader.num_training_batch): # if validate: line 149 divided by 0 ??
         # Get the source, target and dataset data for the next batch
-        x, y, d = data_loader.next_validate_batch(randomUpdate=False)
+        x, y, d = data_loader.next_training_batch(randomUpdate=False)
 
         # Batch size is 1
         x_batch, y_batch, d_batch = x[0], y[0], d[0]
@@ -146,7 +146,7 @@ def main():
         results.append((x[0], complete_traj, sample_args.obs_length))
 
     # Print the mean error across all the batches
-    print("Total mean error of the model is ", total_error/data_loader.num_validate_batch)
+    print("Total mean error of the model is ", total_error/data_loader.num_training_batch)
 
     print("Saving results")
     with open(os.path.join(save_directory, 'social_results.pkl'), 'wb') as f:
