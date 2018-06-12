@@ -106,7 +106,9 @@ def train(args):
                         sess.run([model.cost, model.train_op, model.o_mux, model.o_muy, model.o_sx, model.o_sy, model.o_corr], feed)
 
                     if batch % 6 == 0:
-                        print(o_mux, ", ", o_muy, ", ", o_sx, ", ", o_sy, ", ", o_corr)
+                        print("predicted:", o_mux, ", ", o_muy, ", ", o_sx, ", ", o_sy, ", ", o_corr)
+                        print("correct:", y_batch)
+
                     loss_batch += train_loss
 
                 end = time.time()
