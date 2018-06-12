@@ -116,7 +116,7 @@ def main():
     # For each batch
     for b in range(data_loader.num_training_batch): # if validate: line 149 divided by 0 ??
         # Get the source, target and dataset data for the next batch
-        x, y, d = data_loader.next_training_batch(randomUpdate=False)
+        x, y, d = data_loader.next_training_batch(random_choose=False)
 
         # Batch size is 1
         x_batch, y_batch, d_batch = x[0], y[0], d[0]
