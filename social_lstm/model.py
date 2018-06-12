@@ -127,6 +127,12 @@ class SocialLSTMModel:
                     # Tanh applied to keep it in the range [-1, 1]
                     o_corr = tf.tanh(o_corr)
 
+                    self.o_mux = o_mux
+                    self.o_muy = o_muy
+                    self.o_sx = o_sx
+                    self.o_sy = o_sy
+                    self.o_corr = o_corr
+
                 with tf.name_scope("calculate_loss"):
                     # Calculate the PDF of the data w.r.t to the distribution
                     result0 = self.tf_2d_normal(x_data, y_data, o_mux, o_muy, o_sx, o_sy, o_corr)
