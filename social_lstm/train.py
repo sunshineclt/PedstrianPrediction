@@ -49,7 +49,9 @@ def train(args):
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
         saver = tf.train.Saver(tf.all_variables())
-        saver.restore(sess, "./save/")
+        ckpt = tf.train.get_checkpoint_state("./save/")
+        if ckpt and ckpt.model_checkpoint_path:
+            saver.restore(sess, ckpt.model_checkpoint_path)
 
         from functools import reduce
         from operator import mul
