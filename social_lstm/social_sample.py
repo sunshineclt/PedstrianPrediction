@@ -114,7 +114,7 @@ def main():
     # Variable to maintain total error
     total_error = 0
     # For each batch
-    for b in range(data_loader.num_batches):
+    for b in range(data_loader.num_training_batch):
         # Get the source, target and dataset data for the next batch
         x, y, d = data_loader.next_batch(randomUpdate=False)
 
