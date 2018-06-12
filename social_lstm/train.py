@@ -49,6 +49,7 @@ def train(args):
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
         saver = tf.train.Saver(tf.all_variables())
+        saver.restore(sess, "./save/")
 
         from functools import reduce
         from operator import mul
