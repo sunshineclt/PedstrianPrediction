@@ -106,10 +106,10 @@ def train(args):
                         sess.run([model.cost, model.train_op, model.o_mux, model.o_muy, model.o_sx, model.o_sy, model.o_corr], feed)
 
                     if batch % 6 == 0:
-                        print("o_mux: %.2f, o_muy: %.2f, o_sx: %.2f, o_sy: %.2f, o_corr: %.2f".format(o_mux, o_muy, o_sx, o_sy, o_corr))
+                        print("o_mux: {:.2f}, o_muy: {:.2f}, o_sx: {:.2f}, o_sy: {:.2f}, o_corr: {:.2f}".format(o_mux, o_muy, o_sx, o_sy, o_corr))
                     loss_batch += train_loss
 
-                end = time.time
+                end = time.time()
                 loss_batch /= data_loader.batch_size
                 loss_epoch += loss_batch
                 print(
