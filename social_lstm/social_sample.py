@@ -135,23 +135,23 @@ def main():
         obs_grid = grid_batch[:sample_args.obs_length]
         # obs_traj is an array of shape obs_length x maxNumPeds x 3
 
-        print "********************** SAMPLING A NEW TRAJECTORY", b, "******************************"
+        print("********************** SAMPLING A NEW TRAJECTORY", b, "******************************")
         complete_traj = model.sample(sess, obs_traj, obs_grid, dimensions, x_batch, sample_args.pred_length)
 
         # ipdb.set_trace()
         # complete_traj is an array of shape (obs_length+pred_length) x maxNumPeds x 3
         total_error += get_mean_error(complete_traj, x[0], sample_args.obs_length, saved_args.maxNumPeds)
 
-        print "Processed trajectory number : ", b, "out of ", data_loader.num_batches, " trajectories"
+        print("Processed trajectory number : ", b, "out of ", data_loader.num_batches, " trajectories")
 
         # plot_trajectories(x[0], complete_traj, sample_args.obs_length)
         # return
         results.append((x[0], complete_traj, sample_args.obs_length))
 
     # Print the mean error across all the batches
-    print "Total mean error of the model is ", total_error/data_loader.num_batches
+    print("Total mean error of the model is ", total_error/data_loader.num_batches)
 
-    print "Saving results"
+    print("Saving results")
     with open(os.path.join(save_directory, 'social_results.pkl'), 'wb') as f:
         pickle.dump(results, f)
 
