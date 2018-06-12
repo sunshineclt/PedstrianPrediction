@@ -146,7 +146,7 @@ def main():
         results.append((x[0], complete_traj, sample_args.obs_length))
 
     # Print the mean error across all the batches
-    print("Total mean error of the model is ", total_error/data_loader.num_batches)
+    print("Total mean error of the model is ", total_error/data_loader.num_validate_batch)
 
     print("Saving results")
     with open(os.path.join(save_directory, 'social_results.pkl'), 'wb') as f:
