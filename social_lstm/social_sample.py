@@ -85,8 +85,12 @@ def main():
     save_directory = 'save/'
 
     # Define the path for the config file for saved args
-    with open(os.path.join("save/", 'social_model.ckpt'), 'rb') as f:
-        saved_args = pickle.load(f)
+    
+    #with open(os.path.join("save/", 'social_model.ckpt'), 'rb') as f:
+    #    saved_args = pickle.load(f)
+    ckpt = tf.train.get_checkpoint_state("./save/")
+    if ckpt and ckpt.model_checkpoint_path:
+        saver.restore(sess, ckpt.model_checkpoint_path)
 
     # Create a SocialModel object with the saved_args and infer set to true
     model = SocialLSTMModel(saved_args, True)
