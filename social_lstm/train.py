@@ -43,6 +43,10 @@ def train(args):
                              args.max_num_peds,
                              force_pre_process=True,
                              infer=False)
+
+    with open(os.path.join('./save/', 'social_config.pkl'), 'wb') as f:
+    pickle.dump(args, f)
+
     model = SocialLSTMModel(args)
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
