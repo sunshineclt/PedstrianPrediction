@@ -96,12 +96,9 @@ def main():
     saver = tf.train.Saver()
 
     # Get the checkpoint state for the model
-    ckpt = tf.train.get_checkpoint_state(save_directory)
-    # print ('loading model: ', ckpt.model_checkpoint_path)
-    print('loading model: ', ckpt.all_model_checkpoint_paths[args.epoch])
-
-    # Restore the model at the checkpoint
-    saver.restore(sess, ckpt.all_model_checkpoint_paths[args.epoch])
+    ckpt = tf.train.get_checkpoint_state("./save/")
+    if ckpt and ckpt.model_checkpoint_path:
+        saver.restore(sess, ckpt.model_checkpoint_path)
 
     # Dataset to get data from
     dataset = [sample_args.test_dataset]
