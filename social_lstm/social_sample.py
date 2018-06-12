@@ -7,8 +7,8 @@ import argparse
 # import ipdb
 
 from social_lstm.DataLoader import DataLoader
-from social_model import SocialModel
-from grid import getSequenceGridMask
+from social_lstm.model import SocialLSTMModel
+from social_lstm.grid import get_sequence_grid_mask
 # from social_train import getSocialGrid, getSocialTensor
 
 
@@ -89,7 +89,7 @@ def main():
         saved_args = pickle.load(f)
 
     # Create a SocialModel object with the saved_args and infer set to true
-    model = SocialModel(saved_args, True)
+    model = SocialLSTMModel(saved_args, True)
     # Initialize a TensorFlow session
     sess = tf.InteractiveSession()
     # Initialize a saver
@@ -107,7 +107,7 @@ def main():
     dataset = [sample_args.test_dataset]
 
     # Create a SocialDataLoader object with batch_size 1 and seq_length equal to observed_length + pred_length
-    data_loader = SocialDataLoader(1, sample_args.pred_length + sample_args.obs_length, saved_args.maxNumPeds, dataset, True, infer=True)
+    data_loader = DataLoader(1, sample_args.pred_length + sample_args.obs_length, saved_args.maxNumPeds, dataset, True, infer=True)
 
     # Reset all pointers of the data_loader
     data_loader.reset_batch_pointer()
