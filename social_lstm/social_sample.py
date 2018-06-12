@@ -6,7 +6,7 @@ import pickle
 import argparse
 # import ipdb
 
-from social_utils import SocialDataLoader
+from social_lstm.DataLoader import DataLoader
 from social_model import SocialModel
 from grid import getSequenceGridMask
 # from social_train import getSocialGrid, getSocialTensor
