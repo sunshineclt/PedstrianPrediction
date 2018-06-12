@@ -107,7 +107,7 @@ def main():
     data_loader = DataLoader(1, sample_args.pred_length + sample_args.obs_length, saved_args.max_num_peds, force_pre_process=True, infer=True)
 
     # Reset all pointers of the data_loader
-    data_loader.reset_batch_pointer()
+    data_loader.reset_batch_pointer(validate=False)
 
     results = []
 
