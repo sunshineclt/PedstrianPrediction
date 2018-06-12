@@ -104,7 +104,7 @@ def main():
     dataset = [sample_args.test_dataset]
 
     # Create a SocialDataLoader object with batch_size 1 and seq_length equal to observed_length + pred_length
-    data_loader = DataLoader(1, sample_args.pred_length + sample_args.obs_length, saved_args.maxNumPeds, dataset, True, infer=True)
+    data_loader = DataLoader(1, sample_args.pred_length + sample_args.obs_length, saved_args.max_num_peds, dataset, True, infer=True)
 
     # Reset all pointers of the data_loader
     data_loader.reset_batch_pointer()
@@ -137,7 +137,7 @@ def main():
 
         # ipdb.set_trace()
         # complete_traj is an array of shape (obs_length+pred_length) x maxNumPeds x 3
-        total_error += get_mean_error(complete_traj, x[0], sample_args.obs_length, saved_args.maxNumPeds)
+        total_error += get_mean_error(complete_traj, x[0], sample_args.obs_length, saved_args.max_num_peds)
 
         print("Processed trajectory number : ", b, "out of ", data_loader.num_batches, " trajectories")
 
