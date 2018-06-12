@@ -49,6 +49,17 @@ def train(args):
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
         saver = tf.train.Saver(tf.all_variables())
+
+        from functools import reduce
+        from operator import mul
+
+        def get_num_params():
+            num_params = 0
+            for variable in tf.trainable_variables():
+                shape = variable.get_shape()
+                num_params += reduce(mul, [dim.value for dim in shape], 1)
+            return num_params
+        print("param count: ", get_num_params())
         best_validate_loss = 100
         best_epoch = 0
 
