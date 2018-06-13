@@ -24,8 +24,8 @@ def plot_trajectories(true_trajs, pred_trajs, obs_length, name):
     # implot = plt.imshow(im)
     # width = im.shape[0]
     # height = im.shape[1]
-    # width = 1
-    # height = 1
+    width = 1
+    height = 1
 
     traj_data = {}
     # For each frame/each point in all trajectories
