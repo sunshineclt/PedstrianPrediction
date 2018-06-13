@@ -136,7 +136,7 @@ def main():
         # complete_traj is an array of shape (obs_length+pred_length) x maxNumPeds x 3
         total_error += get_mean_error(complete_traj, x[0], sample_args.obs_length, saved_args.max_num_peds)
 
-        print("Processed trajectory number : ", b, "out of ", data_loader.num_batches, " trajectories")
+        print("Processed trajectory number : ", b, "out of ", data_loader.num_training_batch, " trajectories")
 
         # plot_trajectories(x[0], complete_traj, sample_args.obs_length)
         # return
