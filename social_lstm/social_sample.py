@@ -116,15 +116,12 @@ def main():
     # For each batch
     for b in range(data_loader.num_training_batch): # if validate: line 149 divided by 0 ??
         # Get the source, target and dataset data for the next batch
-        x, y, d = data_loader.next_training_batch(random_choose=False)
+        x, y = data_loader.next_training_batch(random_choose=False)
 
         # Batch size is 1
-        x_batch, y_batch, d_batch = x[0], y[0], d[0]
+        x_batch, y_batch = x[0], y[0]
 
-        if d_batch == 0 and dataset[0] == 0:
-            dimensions = [640, 480]
-        else:
-            dimensions = [720, 576]
+        dimensions = [640, 480]
 
         grid_batch = getSequenceGridMask(x_batch, dimensions, saved_args.neighborhood_size, saved_args.grid_size)
 
