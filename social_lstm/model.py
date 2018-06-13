@@ -201,7 +201,7 @@ class SocialLSTMModel:
 
     def get_social_tensor(self, grid_frame_data):
         '''
-        Computes the social tensor for all the maxNumPeds in the frame
+        Computes the social tensor for all the max_num_peds in the frame
         params:
         grid_frame_data : A tensor of shape MNP x MNP x (GS**2)
         output_states : A list of tensors each of shape 1 x RNN_size of length MNP
@@ -233,15 +233,15 @@ class SocialLSTMModel:
 
     def sample(self, sess, traj, grid, dimensions, true_traj, num=10):
         # traj is a sequence of frames (of length obs_length)
-        # so traj shape is (obs_length x maxNumPeds x 3)
-        # grid is a tensor of shape obs_length x maxNumPeds x maxNumPeds x (gs**2)
+        # so traj shape is (obs_length x max_num_peds x 3)
+        # grid is a tensor of shape obs_length x max_num_peds x max_num_peds x (gs**2)
         states = sess.run(self.LSTM_states)
         # print "Fitting"
         # For each frame in the sequence
         for index, frame in enumerate(traj[:-1]):
-            data = np.reshape(frame, (1, self.maxNumPeds, 3))
-            target_data = np.reshape(traj[index+1], (1, self.maxNumPeds, 3))
-            grid_data = np.reshape(grid[index, :], (1, self.maxNumPeds, self.maxNumPeds, self.grid_size*self.grid_size))
+            data = np.reshape(frame, (1, self.max_num_peds, 3))
+            target_data = np.reshape(traj[index+1], (1, self.max_num_peds, 3))
+            grid_data = np.reshape(grid[index, :], (1, self.max_num_peds, self.max_num_peds, self.grid_size*self.grid_size))
 
             feed = {self.input_data: data, self.LSTM_states: states, self.grid_data: grid_data, self.target_data: target_data}
 
@@ -252,19 +252,19 @@ class SocialLSTMModel:
 
         last_frame = traj[-1]
 
-        prev_data = np.reshape(last_frame, (1, self.maxNumPeds, 3))
-        prev_grid_data = np.reshape(grid[-1], (1, self.maxNumPeds, self.maxNumPeds, self.grid_size*self.grid_size))
+        prev_data = np.reshape(last_frame, (1, self.max_num_peds, 3))
+        prev_grid_data = np.reshape(grid[-1], (1, self.max_num_peds, self.max_num_peds, self.grid_size*self.grid_size))
 
-        prev_target_data = np.reshape(true_traj[traj.shape[0]], (1, self.maxNumPeds, 3))
+        prev_target_data = np.reshape(true_traj[traj.shape[0]], (1, self.max_num_peds, 3))
         # Prediction
         for t in range(num):
             # print "**** NEW PREDICTION TIME STEP", t, "****"
             feed = {self.input_data: prev_data, self.LSTM_states: states, self.grid_data: prev_grid_data, self.target_data: prev_target_data}
             [output, states, cost] = sess.run([self.final_output, self.final_states, self.cost], feed)
             # print "Cost", cost
-            # Output is a list of lists where the inner lists contain matrices of shape 1x5. The outer list contains only one element (since seq_length=1) and the inner list contains maxNumPeds elements
+            # Output is a list of lists where the inner lists contain matrices of shape 1x5. The outer list contains only one element (since seq_length=1) and the inner list contains max_num_peds elements
             # output = output[0]
-            newpos = np.zeros((1, self.maxNumPeds, 3))
+            newpos = np.zeros((1, self.max_num_peds, 3))
             for pedindex, pedoutput in enumerate(output):
                 [o_mux, o_muy, o_sx, o_sy, o_corr] = np.split(pedoutput[0], 5, 0)
                 mux, muy, sx, sy, corr = o_mux[0], o_muy[0], np.exp(o_sx[0]), np.exp(o_sy[0]), np.tanh(o_corr[0])
@@ -283,8 +283,8 @@ class SocialLSTMModel:
             prev_data = newpos
             prev_grid_data = getSequenceGridMask(prev_data, dimensions, self.args.neighborhood_size, self.grid_size)
             if t != num - 1:
-                prev_target_data = np.reshape(true_traj[traj.shape[0] + t + 1], (1, self.maxNumPeds, 3))
+                prev_target_data = np.reshape(true_traj[traj.shape[0] + t + 1], (1, self.max_num_peds, 3))
 
-        # The returned ret is of shape (obs_length+pred_length) x maxNumPeds x 3
+        # The returned ret is of shape (obs_length+pred_length) x max_num_peds x 3
         return ret
 
