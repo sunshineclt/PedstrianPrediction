@@ -123,7 +123,7 @@ def main():
 
         dimensions = [640, 480]
 
-        grid_batch = getSequenceGridMask(x_batch, dimensions, saved_args.neighborhood_size, saved_args.grid_size)
+        grid_batch = get_sequence_grid_mask(x_batch, dimensions, saved_args.neighborhood_size, saved_args.grid_size)
 
         obs_traj = x_batch[:sample_args.obs_length]
         obs_grid = grid_batch[:sample_args.obs_length]
