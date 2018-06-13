@@ -84,7 +84,7 @@ def main():
     results = pickle.load(f)
 
     for i in range(len(results)):
-        print i
+        print(i)
         name = 'sequence' + str(i)
         plot_trajectories(results[i][0], results[i][1], results[i][2], name)
 
