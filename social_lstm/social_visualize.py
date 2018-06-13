@@ -17,7 +17,7 @@ def plot_trajectories(true_trajs, pred_trajs, obs_length, name):
     traj_length, maxNumPeds, _ = true_trajs.shape
 
     # Initialize figure
-    plt.figure()
+    #plt.figure()
 
     # Load the background
     im = plt.imread('plot/background.png')
