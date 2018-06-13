@@ -162,7 +162,7 @@ class SocialLSTMModel:
         l2 = args.L2_param * sum(tf.nn.l2_loss(tvar) for tvar in vars)
         self.cost = self.cost + l2
 
-        self.final_states = tf.concat(0, self.initial_states)
+        self.final_states = tf.concat(self.initial_states, axis = 0)
 
         self.final_output = self.initial_output
 
