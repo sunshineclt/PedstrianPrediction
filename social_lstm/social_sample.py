@@ -104,7 +104,7 @@ def main():
     dataset = [sample_args.test_dataset]
 
     # Create a SocialDataLoader object with batch_size 1 and seq_length equal to observed_length + pred_length
-    data_loader = DataLoader(1, sample_args.pred_length + sample_args.obs_length, saved_args.max_num_peds, force_pre_process=True, infer=True)
+    data_loader = DataLoader(1, sample_args.pred_length + sample_args.obs_length, saved_args.max_num_peds, force_pre_process=True, infer=False)
 
     # Reset all pointers of the data_loader
     data_loader.reset_batch_pointer(validate=True)
@@ -114,9 +114,9 @@ def main():
     # Variable to maintain total error
     total_error = 0
     # For each batch
-    for b in range(data_loader.num_training_batch): # if validate: line 149 divided by 0 ??
+    for b in range(data_loader.num_validate_batch): # if validate: line 149 divided by 0 ??
         # Get the source, target and dataset data for the next batch
-        x, y = data_loader.next_training_batch(random_choose=False)
+        x, y = data_loader.next_validate_batch(random_choose=False)
 
         # Batch size is 1
         x_batch, y_batch = x[0], y[0]
@@ -136,14 +136,14 @@ def main():
         # complete_traj is an array of shape (obs_length+pred_length) x maxNumPeds x 3
         total_error += get_mean_error(complete_traj, x[0], sample_args.obs_length, saved_args.max_num_peds)
 
-        print("Processed trajectory number : ", b, "out of ", data_loader.num_training_batch, " trajectories")
+        print("Processed trajectory number : ", b, "out of ", data_loader.num_validate_batch, " trajectories")
 
         # plot_trajectories(x[0], complete_traj, sample_args.obs_length)
         # return
         results.append((x[0], complete_traj, sample_args.obs_length))
 
     # Print the mean error across all the batches
-    print("Total mean error of the model is ", total_error/data_loader.num_training_batch)
+    print("Total mean error of the model is ", total_error/data_loader.num_validate_batch)
 
     print("Saving results")
     with open(os.path.join(save_directory, 'social_results.pkl'), 'wb') as f:
