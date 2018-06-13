@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+from social_lstm.grid import get_sequence_grid_mask
 
 
 class SocialLSTMModel:
@@ -302,7 +303,7 @@ class SocialLSTMModel:
                 newpos[0, pedindex, :] = [prev_data[0, pedindex, 0], next_x, next_y]
             ret = np.vstack((ret, newpos))
             prev_data = newpos
-            prev_grid_data = getSequenceGridMask(prev_data, dimensions, self.args.neighborhood_size, self.grid_size)
+            prev_grid_data = get_sequence_grid_mask(prev_data, dimensions, self.args.neighborhood_size, self.grid_size)
             if t != num - 1:
                 prev_target_data = np.reshape(true_traj[traj.shape[0] + t + 1], (1, self.max_num_peds, 3))
 
