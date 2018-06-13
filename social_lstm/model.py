@@ -233,6 +233,25 @@ class SocialLSTMModel:
         social_tensor = tf.reshape(social_tensor, [self.args.max_num_peds, self.grid_size*self.grid_size*self.lstm_num])
         return social_tensor
 
+
+    def sample_gaussian_2d(self, mux, muy, sx, sy, rho):
+        '''
+        Function to sample a point from a given 2D normal distribution
+        params:
+        mux : mean of the distribution in x
+        muy : mean of the distribution in y
+        sx : std dev of the distribution in x
+        sy : std dev of the distribution in y
+        rho : Correlation factor of the distribution
+        '''
+        # Extract mean
+        mean = [mux, muy]
+        # Extract covariance matrix
+        cov = [[sx*sx, rho*sx*sy], [rho*sx*sy, sy*sy]]
+        # Sample a point from the multivariate normal distribution
+        x = np.random.multivariate_normal(mean, cov, 1)
+        return x[0][0], x[0][1]
+
     def sample(self, sess, traj, grid, dimensions, true_traj, num=10):
         # traj is a sequence of frames (of length obs_length)
         # so traj shape is (obs_length x max_num_peds x 3)
