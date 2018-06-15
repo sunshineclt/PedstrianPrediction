@@ -67,7 +67,7 @@ def plot_trajectories(true_trajs, pred_trajs, obs_length, name):
         pred_x = [p[0]*height for p in pred_traj_ped]
         pred_y = [p[1]*width for p in pred_traj_ped]
 
-        plt.plot(true_x, true_y, color=c, linestyle='solid', marker='.')
+        plt.plot(true_x, true_y, color=c, linestyle='solid', marker='o')
         plt.plot(pred_x, pred_y, color=c, linestyle='dashed', marker='x')
 
     # plt.ylim((0, 1))
