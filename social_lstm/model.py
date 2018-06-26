@@ -88,7 +88,11 @@ class SocialLSTMModel:
         for seq, frame in enumerate(frame_data):
             current_frame_data = frame
             current_grid_frame_data = grid_frame_data[seq]
-            social_tensor = self.get_social_tensor(current_grid_frame_data)
+
+            # social_tensor = self.get_social_tensor(current_grid_frame_data)
+
+            # spatial pyramid
+            social_tensor = self.get_social_tensor_spatial_pyramid(current_grid_frame_data)
 
             for ped in range(args.max_num_peds):
                 ped_id = current_frame_data[ped, 0]
@@ -202,7 +206,7 @@ class SocialLSTMModel:
         result = tf.div(result, denom)
         return result
 
-    def get_social_tensor(self, grid_frame_data):
+    def get_social_tensor(self, grid_frame_data, grid_size = self.grid_size):
         '''
         Computes the social tensor for all the max_num_peds in the frame
         params:
@@ -210,7 +214,7 @@ class SocialLSTMModel:
         output_states : A list of tensors each of shape 1 x RNN_size of length MNP
         '''
         # Create a zero tensor of shape MNP x (GS**2) x RNN_size
-        social_tensor = tf.zeros([self.args.max_num_peds, self.grid_size*self.grid_size, self.lstm_num], name="social_tensor")
+        social_tensor = tf.zeros([self.args.max_num_peds, grid_size*grid_size, self.lstm_num], name="social_tensor")
         # Create a list of zero tensors each of shape 1 x (GS**2) x RNN_size of length MNP
         social_tensor = tf.split(social_tensor, self.args.max_num_peds, axis=0)
         # Concatenate list of hidden states to form a tensor of shape MNP x RNN_size
@@ -226,13 +230,24 @@ class SocialLSTMModel:
             # Compute social tensor for the current pedestrian
             with tf.name_scope("tensor_calculation"):
                 social_tensor_ped = tf.matmul(tf.transpose(grid_frame_ped_data[ped]), hidden_states)
-                social_tensor[ped] = tf.reshape(social_tensor_ped, [1, self.grid_size*self.grid_size, self.lstm_num])
+                social_tensor[ped] = tf.reshape(social_tensor_ped, [1, grid_size*grid_size, self.lstm_num])
 
         # Concatenate the social tensor from a list to a tensor of shape MNP x (GS**2) x RNN_size
         social_tensor = tf.concat(social_tensor, axis=0)
         # Reshape the tensor to match the dimensions MNP x (GS**2 * RNN_size)
         social_tensor = tf.reshape(social_tensor, [self.args.max_num_peds, self.grid_size*self.grid_size*self.lstm_num])
         return social_tensor
+
+
+    # the new function for getting spatial pyramid
+    def get_social_tensor_spatial_pyramid(self, grid_frame_data):
+
+        social_spatial = get_social_tensor(grid_frame_data, self.grid_size)
+
+        for i in {2, 4}:
+            social_spatial += get_social_tensor(grid_frame_data, i * self.grid_size)
+
+        return social_spatial
 
 
     def sample_gaussian_2d(self, mux, muy, sx, sy, rho):
