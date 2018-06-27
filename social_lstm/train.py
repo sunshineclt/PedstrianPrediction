@@ -15,7 +15,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--seq_length", type=int, default=12,
                         help="RNN sequence length")
-    parser.add_argument("--num_epochs", type=int, default=50)
+    parser.add_argument("--num_epochs", type=int, default=20)
     parser.add_argument("--save_freq", type=int, default=400,
                         help="save every")
     parser.add_argument('--gradient_clip', type=float, default=10.,
