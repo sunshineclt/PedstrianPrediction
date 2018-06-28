@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from social_lstm.grid import get_sequence_grid_mask
+from social_lstm.grid import get_sequence_grid_mask, get_sequence_pyramid_mask
 
 
 class SocialLSTMModel:
@@ -308,8 +308,12 @@ class SocialLSTMModel:
         for index, frame in enumerate(traj[:-1]):
             data = np.reshape(frame, (1, self.max_num_peds, 3))
             target_data = np.reshape(traj[index + 1], (1, self.max_num_peds, 3))
-            grid_data = np.reshape(grid[index, :],
-                                   (1, self.max_num_peds, self.max_num_peds, self.grid_size * self.grid_size))
+            if self.pyramid:
+                grid_data = np.reshape(grid[index],
+                                       (1, self.max_num_peds, (1 ** 2 + 2 ** 2 + 4 ** 2)))
+            else:
+                grid_data = np.reshape(grid[index, :],
+                                       (1, self.max_num_peds, self.max_num_peds, self.grid_size * self.grid_size))
 
             feed = {self.input_data: data, self.LSTM_states: states, self.grid_data: grid_data,
                     self.target_data: target_data}
@@ -322,8 +326,12 @@ class SocialLSTMModel:
         last_frame = traj[-1]
 
         prev_data = np.reshape(last_frame, (1, self.max_num_peds, 3))
-        prev_grid_data = np.reshape(grid[-1],
-                                    (1, self.max_num_peds, self.max_num_peds, self.grid_size * self.grid_size))
+        if self.pyramid:
+            prev_grid_data = np.reshape(grid[-1],
+                                        (1, self.max_num_peds, (1 ** 2 + 2 ** 2 + 4 ** 2)))
+        else:
+            prev_grid_data = np.reshape(grid[-1],
+                                        (1, self.max_num_peds, self.max_num_peds, self.grid_size * self.grid_size))
 
         prev_target_data = np.reshape(true_traj[traj.shape[0]], (1, self.max_num_peds, 3))
         # Prediction
@@ -352,7 +360,11 @@ class SocialLSTMModel:
                 newpos[0, pedindex, :] = [prev_data[0, pedindex, 0], next_x, next_y]
             ret = np.vstack((ret, newpos))
             prev_data = newpos
-            prev_grid_data = get_sequence_grid_mask(prev_data, dimensions, self.args.neighborhood_size, self.grid_size)
+            if self.pyramid:
+                prev_grid_data = get_sequence_pyramid_mask(prev_data)
+            else:
+                prev_grid_data = get_sequence_grid_mask(prev_data, dimensions, self.args.neighborhood_size, self.grid_size)
+
             if t != num - 1:
                 prev_target_data = np.reshape(true_traj[traj.shape[0] + t + 1], (1, self.max_num_peds, 3))
 

@@ -58,7 +58,7 @@ def plot_trajectories(true_trajs, pred_trajs, obs_length, name):
                     traj_data[j][1].append(pred_pos[j, 1:3])
 
     for j in traj_data:
-        c = np.random.rand(3, 1)
+        c = np.random.rand(3)
         true_traj_ped = traj_data[j][0]  # List of [x,y] elements
         pred_traj_ped = traj_data[j][1]
 

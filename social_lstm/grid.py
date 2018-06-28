@@ -107,6 +107,8 @@ def getPyramidMask(frame, grid_size):
         current_x, current_y = frame[pedindex, 1], frame[pedindex, 2]
         section_x = int(current_x // (1 / grid_size))
         section_y = int(current_y // (1 / grid_size))
+        section_x = min(max(section_x, 0), grid_size - 1)
+        section_y = min(max(section_y, 0), grid_size - 1)
         frame_mask[pedindex, section_x * grid_size + section_y] = 1
 
     return frame_mask

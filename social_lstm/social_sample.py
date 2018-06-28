@@ -8,7 +8,7 @@ import argparse
 
 from social_lstm.DataLoader import DataLoader
 from social_lstm.model import SocialLSTMModel
-from social_lstm.grid import get_sequence_grid_mask
+from social_lstm.grid import get_sequence_grid_mask, get_sequence_pyramid_mask
 # from social_train import getSocialGrid, getSocialTensor
 
 
@@ -76,7 +76,9 @@ def main():
     # Model to be loaded
     parser.add_argument('--epoch', type=int, default=49,
                         help='Epoch of model to be loaded')
-    
+
+    parser.add_argument("--pyramid", type=int, default=0,
+                        help="whether to use pyramid method")
 
     # Parse the parameters
     sample_args = parser.parse_args()
@@ -89,7 +91,10 @@ def main():
         saved_args = pickle.load(f)
 
     # Create a SocialModel object with the saved_args and infer set to true
-    model = SocialLSTMModel(saved_args, True)
+    if saved_args.pyramid == 0:
+        model = SocialLSTMModel(saved_args, True, pyramid=False)
+    else:
+        model = SocialLSTMModel(saved_args, True, pyramid=True)
     # Initialize a TensorFlow session
     sess = tf.InteractiveSession()
     # Initialize a saver
@@ -123,7 +128,10 @@ def main():
 
         dimensions = [640, 480]
 
-        grid_batch = get_sequence_grid_mask(x_batch, dimensions, saved_args.neighborhood_size, saved_args.grid_size)
+        if saved_args.pyramid == 0:
+            grid_batch = get_sequence_grid_mask(x_batch, dimensions, saved_args.neighborhood_size, saved_args.grid_size)
+        else:
+            grid_batch = get_sequence_pyramid_mask(x_batch)
 
         obs_traj = x_batch[:sample_args.obs_length]
         obs_grid = grid_batch[:sample_args.obs_length]
