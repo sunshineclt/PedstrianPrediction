@@ -5,7 +5,7 @@ from social_lstm.model import SocialLSTMModel
 import time
 import os
 import pickle
-from social_lstm.grid import get_sequence_grid_mask
+from social_lstm.grid import get_sequence_grid_mask, get_sequence_pyramid_mask
 
 
 def main():
@@ -32,6 +32,8 @@ def main():
                         help='Maximum Number of Pedestrians')
     parser.add_argument('--L2_param', type=float, default=0.0005,
                         help='L2 regularization parameter')
+    parser.add_argument("--pyramid", type=int, default=0,
+                        help="whether to use pyramid method")
     args = parser.parse_args()
     train(args)
 
@@ -46,7 +48,10 @@ def train(args):
     with open(os.path.join('./save/', 'social_config.pkl'), 'wb') as f:
         pickle.dump(args, f)
 
-    model = SocialLSTMModel(args)
+    if args.pyramid == 0:
+        model = SocialLSTMModel(args, pyramid=False)
+    else:
+        model = SocialLSTMModel(args, pyramid=True)
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     with tf.Session() as sess:
@@ -103,10 +108,11 @@ def train(args):
 
                     dataset_data = [640, 480]
 
-                    grid_batch = get_sequence_grid_mask(x_batch, dataset_data, args.neighborhood_size, args.grid_size)
+                    # grid_batch = get_sequence_grid_mask(x_batch, dataset_data, args.neighborhood_size, args.grid_size)
+                    pyramid_batch = get_sequence_pyramid_mask(x_batch)
 
                     # Feed the source, target data
-                    feed = {model.input_data: x_batch, model.target_data: y_batch, model.grid_data: grid_batch}
+                    feed = {model.input_data: x_batch, model.target_data: y_batch, model.grid_data: pyramid_batch}
                     train_loss, _, = sess.run([model.cost, model.train_op], feed)
 
                     # train_loss, _, o_mux, o_muy, o_sx, o_sy, o_corr = \
@@ -153,10 +159,11 @@ def train(args):
 
                     dataset_data = [640, 480]
 
-                    grid_batch = get_sequence_grid_mask(x_batch, dataset_data, args.neighborhood_size, args.grid_size)
+                    # grid_batch = get_sequence_grid_mask(x_batch, dataset_data, args.neighborhood_size, args.grid_size)
+                    pyramid_batch = get_sequence_pyramid_mask(x_batch)
 
                     # Feed the source, target data
-                    feed = {model.input_data: x_batch, model.target_data: y_batch, model.grid_data: grid_batch}
+                    feed = {model.input_data: x_batch, model.target_data: y_batch, model.grid_data: pyramid_batch}
 
                     train_loss = sess.run(model.cost, feed)
 

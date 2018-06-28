@@ -78,3 +78,48 @@ def get_sequence_grid_mask(sequence, dimensions, neighborhood_size, grid_size):
         sequence_mask[i, :, :, :] = getGridMask(sequence[i, :, :], dimensions, neighborhood_size, grid_size)
 
     return sequence_mask
+
+
+def getPyramidMask(frame, grid_size):
+    '''
+    This function computes the binary mask that represents the
+    occupancy of each ped in the other's grid
+    params:
+    frame : This will be a MNP x 3 matrix with each row being [pedID, x, y]
+    dimensions : This will be a list [width, height]
+    neighborhood_size : Scalar value representing the size of neighborhood considered
+    grid_size : Scalar value representing the size of the grid discretization
+    '''
+
+    # Maximum number of pedestrians
+    mnp = frame.shape[0]
+
+    frame_mask = np.zeros([mnp, grid_size**2])
+
+    # For each ped in the frame (existent and non-existent)
+    for pedindex in range(mnp):
+        # If pedID is zero, then non-existent ped
+        if frame[pedindex, 0] == 0:
+            # Binary mask should be zero for non-existent ped
+            continue
+
+        # Get x and y of the current ped
+        current_x, current_y = frame[pedindex, 1], frame[pedindex, 2]
+        section_x = current_x // (1 / grid_size)
+        section_y = current_y // (1 / grid_size)
+        frame_mask[pedindex, section_x * grid_size + section_y] = 1
+
+    return frame_mask
+
+
+def get_sequence_pyramid_mask(sequence):
+    sl = sequence.shape[0]
+    mnp = sequence.shape[1]
+    sequence_mask = np.zeros((sl, mnp, 1 ** 2 + 2 ** 2 + 4 ** 2))
+
+    for i in range(sl):
+        sequence_mask[i, :, :1] = getPyramidMask(sequence[i, :], 1)
+        sequence_mask[i, :, 1:5] = getPyramidMask(sequence[i, :], 2)
+        sequence_mask[i, :, 5:21] = getPyramidMask(sequence[i, :], 4)
+
+    return sequence_mask

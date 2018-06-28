@@ -4,7 +4,7 @@ from social_lstm.grid import get_sequence_grid_mask
 
 
 class SocialLSTMModel:
-    def __init__(self, args, infer=False):
+    def __init__(self, args, infer=False, pyramid=False):
         if infer:
             args.batch_size = 1
             args.seq_length = 1
@@ -14,6 +14,7 @@ class SocialLSTMModel:
         self.lstm_num = args.lstm_num
         self.grid_size = args.grid_size
         self.max_num_peds = args.max_num_peds
+        self.pyramid = pyramid
 
         # variables definition
         #############################################################################
@@ -29,10 +30,16 @@ class SocialLSTMModel:
         self.target_data = tf.placeholder(dtype=tf.float32, shape=[args.seq_length, args.max_num_peds, 3],
                                           name="target_data")
         # frame * ped * ped * (grid * grid)
-        self.grid_data = tf.placeholder(dtype=tf.float32,
-                                        shape=[args.seq_length, args.max_num_peds, args.max_num_peds,
-                                               args.grid_size * args.grid_size],
-                                        name="grid_data")
+        if pyramid:
+            self.grid_data = tf.placeholder(dtype=tf.float32,
+                                            shape=[args.seq_length, args.max_num_peds,
+                                                   1 ** 2 + 2 ** 2 + 4 ** 2],
+                                            name="grid_data")
+        else:
+            self.grid_data = tf.placeholder(dtype=tf.float32,
+                                            shape=[args.seq_length, args.max_num_peds, args.max_num_peds,
+                                                   args.grid_size * args.grid_size],
+                                            name="grid_data")
         self.lr = tf.Variable(args.learning_rate, trainable=False, name="learning_rate")
         self.output_size = 5
 
@@ -44,9 +51,15 @@ class SocialLSTMModel:
                                                      initializer=tf.constant_initializer(0.1))
         # Define variables for the social tensor embedding layer
         with tf.variable_scope("tensor_embedding"):
-            self.embedding_t_w = tf.get_variable("embedding_t_w",
-                                                 [args.grid_size * args.grid_size * args.lstm_num, args.embedding_size],
-                                                 initializer=tf.truncated_normal_initializer(stddev=0.1))
+            if pyramid:
+                self.embedding_t_w = tf.get_variable("embedding_t_w",
+                                                     [(1 ** 2 + 2 ** 2 + 4 ** 2) * self.lstm_num * 2,
+                                                      args.embedding_size],
+                                                      initializer=tf.truncated_normal_initializer(stddev=0.1))
+            else:
+                self.embedding_t_w = tf.get_variable("embedding_t_w",
+                                                     [args.grid_size * args.grid_size * args.lstm_num * 2, args.embedding_size],
+                                                     initializer=tf.truncated_normal_initializer(stddev=0.1))
             self.embedding_t_b = tf.get_variable("embedding_t_b", [args.embedding_size],
                                                  initializer=tf.constant_initializer(0.1))
         # Define variables for the output linear layer
@@ -98,10 +111,10 @@ class SocialLSTMModel:
             current_frame_data = frame
             current_grid_frame_data = grid_frame_data[seq]
 
-            social_tensor = self.get_social_tensor(current_grid_frame_data, self.grid_size)
-
-            # spatial pyramid
-            # social_tensor = self.get_social_tensor_spatial_pyramid(current_grid_frame_data)
+            if pyramid:
+                social_tensor = self.get_social_tensor_spatial_pyramid(current_grid_frame_data)
+            else:
+                social_tensor = self.get_social_tensor(current_grid_frame_data, self.grid_size)
 
             for ped in range(args.max_num_peds):
                 ped_id = current_frame_data[ped, 0]
@@ -109,8 +122,11 @@ class SocialLSTMModel:
                 # current spatial and social tensor for ped in seq
                 with tf.name_scope("extract_input_ped"):
                     self.spatial_input = tf.slice(current_frame_data, [ped, 1], [1, 2])
-                    self.tensor_input = tf.slice(social_tensor, [ped, 0],
-                                                 [1, args.grid_size * args.grid_size * args.lstm_num])
+                    if pyramid:
+                        self.tensor_input = tf.reshape(social_tensor, [1, (1 ** 2 + 2 ** 2 + 4 ** 2) * self.lstm_num * 2])
+                    else:
+                        self.tensor_input = tf.slice(social_tensor, [ped, 0],
+                                                     [1, args.grid_size * args.grid_size * args.lstm_num * 2])
 
                 with tf.name_scope("embeddings_operations"):
                     # Embed the spatial input
@@ -254,14 +270,15 @@ class SocialLSTMModel:
         return social_tensor
 
     # the new function for getting spatial pyramid
-    def get_social_tensor_spatial_pyramid(self, grid_frame_data):
+    def get_social_tensor_spatial_pyramid(self, pyramid_frame_data):
 
-        social_spatial = self.get_social_tensor(grid_frame_data, 1)
+        # MNP * (rnn_size * 2)
+        hidden_states = tf.concat(self.initial_states, axis=0)
 
-        for i in {2, 4}:
-            social_spatial += self.get_social_tensor(grid_frame_data, i * self.grid_size)
+        with tf.name_scope("spatial_pyramid_calculation"):
+            social_pyramid = tf.matmul(tf.transpose(pyramid_frame_data), hidden_states)
 
-        return social_spatial
+        return tf.reshape(social_pyramid, [(1 ** 2 + 2 ** 2 + 4 ** 2) * self.lstm_num * 2])
 
     def sample_gaussian_2d(self, mux, muy, sx, sy, rho):
         '''
