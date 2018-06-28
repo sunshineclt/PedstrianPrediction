@@ -1,0 +1,6 @@
+model_checkpoint_path: "social_model.ckpt-19"
+all_model_checkpoint_paths: "social_model.ckpt-6"
+all_model_checkpoint_paths: "social_model.ckpt-8"
+all_model_checkpoint_paths: "social_model.ckpt-15"
+all_model_checkpoint_paths: "social_model.ckpt-18"
+all_model_checkpoint_paths: "social_model.ckpt-19"
