@@ -108,11 +108,14 @@ def train(args):
 
                     dataset_data = [640, 480]
 
-                    # grid_batch = get_sequence_grid_mask(x_batch, dataset_data, args.neighborhood_size, args.grid_size)
-                    pyramid_batch = get_sequence_pyramid_mask(x_batch)
+                    if args.pyramid == 0:
+                        grid_batch = get_sequence_grid_mask(x_batch, dataset_data, args.neighborhood_size, args.grid_size)
+                        feed = {model.input_data: x_batch, model.target_data: y_batch, model.grid_data: grid_batch}
+                    else:
+                        pyramid_batch = get_sequence_pyramid_mask(x_batch)
+                        feed = {model.input_data: x_batch, model.target_data: y_batch, model.grid_data: pyramid_batch}
 
                     # Feed the source, target data
-                    feed = {model.input_data: x_batch, model.target_data: y_batch, model.grid_data: pyramid_batch}
                     train_loss, _, = sess.run([model.cost, model.train_op], feed)
 
                     # train_loss, _, o_mux, o_muy, o_sx, o_sy, o_corr = \
@@ -159,12 +162,14 @@ def train(args):
 
                     dataset_data = [640, 480]
 
-                    # grid_batch = get_sequence_grid_mask(x_batch, dataset_data, args.neighborhood_size, args.grid_size)
-                    pyramid_batch = get_sequence_pyramid_mask(x_batch)
+                    if args.pyramid == 0:
+                        grid_batch = get_sequence_grid_mask(x_batch, dataset_data, args.neighborhood_size, args.grid_size)
+                        feed = {model.input_data: x_batch, model.target_data: y_batch, model.grid_data: grid_batch}
+                    else:
+                        pyramid_batch = get_sequence_pyramid_mask(x_batch)
+                        feed = {model.input_data: x_batch, model.target_data: y_batch, model.grid_data: pyramid_batch}
 
                     # Feed the source, target data
-                    feed = {model.input_data: x_batch, model.target_data: y_batch, model.grid_data: pyramid_batch}
-
                     train_loss = sess.run(model.cost, feed)
 
                     loss_batch += train_loss
