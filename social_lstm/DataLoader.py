@@ -26,7 +26,7 @@ class DataLoader:
         self.training_frame_data = None
         # what frames do data have
         self.frame_list = None
-        # how many peds are in each framex
+        # how many peds are in each frames
         self.num_peds_data = None
         # validate_frame_data has shape [frame, ped, 3] and 3 is ID, x, y
         self.validate_frame_data = None
@@ -56,7 +56,7 @@ class DataLoader:
         training_frame_data = np.zeros(shape=[num_frames - validate_num_frames, self.max_num_peds, 3])
         # validate_frame_data has shape [frame, ped, 3] and 3 is ID, x, y
         validate_frame_data = np.zeros(shape=[validate_num_frames, self.max_num_peds, 3])
-        # how many peds are in each framex
+        # how many peds are in each frames
         num_peds_data = []
         for index, frame in enumerate(frame_list):
             this_frame_data = data[:, data[0, :] == frame]
@@ -91,7 +91,7 @@ class DataLoader:
 
         number_of_training = len(self.training_frame_data)
         number_of_validate = len(self.validate_frame_data)
-        self.num_training_batch = int(number_of_training / self.batch_size) * 2 # because of the random choose
+        self.num_training_batch = int(number_of_training / self.batch_size) * 2  # because of the random choose
         self.num_validate_batch = int(number_of_validate / self.batch_size)
 
     def next_training_batch(self, random_choose=True):

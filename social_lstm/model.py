@@ -27,25 +27,32 @@ class SocialLSTMModel:
                                          name="input_data")
         # frame * ped * (ped_id, x, y)
         self.target_data = tf.placeholder(dtype=tf.float32, shape=[args.seq_length, args.max_num_peds, 3],
-                                          name="input_data")
+                                          name="target_data")
         # frame * ped * ped * (grid * grid)
         self.grid_data = tf.placeholder(dtype=tf.float32,
-                                        shape=[args.seq_length, args.max_num_peds, args.max_num_peds, args.grid_size*args.grid_size],
+                                        shape=[args.seq_length, args.max_num_peds, args.max_num_peds,
+                                               args.grid_size * args.grid_size],
                                         name="grid_data")
         self.lr = tf.Variable(args.learning_rate, trainable=False, name="learning_rate")
         self.output_size = 5
 
         # Define variables for the coordinate tensor embedding layer
         with tf.variable_scope("coordinate_embedding"):
-            self.embedding_coord_w = tf.get_variable("embedding_coord_w", [2, args.embedding_size], initializer=tf.truncated_normal_initializer(stddev=0.1))
-            self.embedding_coord_b = tf.get_variable("embedding_coord_b", [args.embedding_size], initializer=tf.constant_initializer(0.1))
+            self.embedding_coord_w = tf.get_variable("embedding_coord_w", [2, args.embedding_size],
+                                                     initializer=tf.truncated_normal_initializer(stddev=0.1))
+            self.embedding_coord_b = tf.get_variable("embedding_coord_b", [args.embedding_size],
+                                                     initializer=tf.constant_initializer(0.1))
         # Define variables for the social tensor embedding layer
         with tf.variable_scope("tensor_embedding"):
-            self.embedding_t_w = tf.get_variable("embedding_t_w", [args.grid_size*args.grid_size*args.lstm_num, args.embedding_size], initializer=tf.truncated_normal_initializer(stddev=0.1))
-            self.embedding_t_b = tf.get_variable("embedding_t_b", [args.embedding_size], initializer=tf.constant_initializer(0.1))
+            self.embedding_t_w = tf.get_variable("embedding_t_w",
+                                                 [args.grid_size * args.grid_size * args.lstm_num, args.embedding_size],
+                                                 initializer=tf.truncated_normal_initializer(stddev=0.1))
+            self.embedding_t_b = tf.get_variable("embedding_t_b", [args.embedding_size],
+                                                 initializer=tf.constant_initializer(0.1))
         # Define variables for the output linear layer
         with tf.variable_scope("output_layer"):
-            self.output_w = tf.get_variable("output_w", [args.lstm_num, self.output_size], initializer=tf.truncated_normal_initializer(stddev=0.1))
+            self.output_w = tf.get_variable("output_w", [args.lstm_num, self.output_size],
+                                            initializer=tf.truncated_normal_initializer(stddev=0.1))
             self.output_b = tf.get_variable("output_b", [self.output_size], initializer=tf.constant_initializer(0.1))
         #############################################################################
 
@@ -55,7 +62,8 @@ class SocialLSTMModel:
             self.LSTM_states = tf.zeros([args.max_num_peds, cell.state_size], name="LSTM_states")
             self.initial_states = tf.split(self.LSTM_states, args.max_num_peds, axis=0)
         with tf.variable_scope("hidden_states"):
-            self.output_states = tf.split(tf.zeros(shape=[args.max_num_peds, cell.output_size]), args.max_num_peds, axis=0)
+            self.output_states = tf.split(tf.zeros(shape=[args.max_num_peds, cell.output_size]), args.max_num_peds,
+                                          axis=0)
         #############################################################################
 
         # prepare data
@@ -63,7 +71,8 @@ class SocialLSTMModel:
         with tf.name_scope("frame_data_tensors"):
             frame_data = [tf.squeeze(input_, [0]) for input_ in tf.split(self.input_data, args.seq_length, axis=0)]
         with tf.name_scope("frame_target_data_tensors"):
-            frame_target_data = [tf.squeeze(target_, [0]) for target_ in tf.split(self.target_data, args.seq_length, axis=0)]
+            frame_target_data = [tf.squeeze(target_, [0]) for target_ in
+                                 tf.split(self.target_data, args.seq_length, axis=0)]
         with tf.name_scope("grid_frame_data_tensors"):
             grid_frame_data = [tf.squeeze(input_, [0]) for input_ in tf.split(self.grid_data, args.seq_length, axis=0)]
         #############################################################################
@@ -89,23 +98,27 @@ class SocialLSTMModel:
             current_frame_data = frame
             current_grid_frame_data = grid_frame_data[seq]
 
-            # social_tensor = self.get_social_tensor(current_grid_frame_data)
+            social_tensor = self.get_social_tensor(current_grid_frame_data, self.grid_size)
 
             # spatial pyramid
-            social_tensor = self.get_social_tensor_spatial_pyramid(current_grid_frame_data)
+            # social_tensor = self.get_social_tensor_spatial_pyramid(current_grid_frame_data)
 
             for ped in range(args.max_num_peds):
                 ped_id = current_frame_data[ped, 0]
 
+                # current spatial and social tensor for ped in seq
                 with tf.name_scope("extract_input_ped"):
                     self.spatial_input = tf.slice(current_frame_data, [ped, 1], [1, 2])
-                    self.tensor_input = tf.slice(social_tensor, [ped, 0], [1, args.grid_size*args.grid_size*args.lstm_num])
+                    self.tensor_input = tf.slice(social_tensor, [ped, 0],
+                                                 [1, args.grid_size * args.grid_size * args.lstm_num])
 
                 with tf.name_scope("embeddings_operations"):
                     # Embed the spatial input
-                    embedded_spatial_input = tf.nn.relu(tf.nn.xw_plus_b(self.spatial_input, self.embedding_coord_w, self.embedding_coord_b))
+                    embedded_spatial_input = tf.nn.relu(
+                        tf.nn.xw_plus_b(self.spatial_input, self.embedding_coord_w, self.embedding_coord_b))
                     # Embed the tensor input
-                    embedded_tensor_input = tf.nn.relu(tf.nn.xw_plus_b(self.tensor_input, self.embedding_t_w, self.embedding_t_b))
+                    embedded_tensor_input = tf.nn.relu(
+                        tf.nn.xw_plus_b(self.tensor_input, self.embedding_t_w, self.embedding_t_b))
 
                 with tf.name_scope("concatenate_embeddings"):
                     # Concatenate the embeddings
@@ -167,7 +180,7 @@ class SocialLSTMModel:
         l2 = args.L2_param * sum(tf.nn.l2_loss(tvar) for tvar in vars)
         self.cost = self.cost + l2
 
-        self.final_states = tf.concat(self.initial_states, axis = 0)
+        self.final_states = tf.concat(self.initial_states, axis=0)
 
         self.final_output = self.initial_output
 
@@ -196,17 +209,18 @@ class SocialLSTMModel:
         # Calculate sx*sy
         sxsy = tf.multiply(sx, sy)
         # Calculate the exponential factor
-        z = tf.square(tf.div(normx, sx)) + tf.square(tf.div(normy, sy)) - 2*tf.div(tf.multiply(rho, tf.multiply(normx, normy)), sxsy)
+        z = tf.square(tf.div(normx, sx)) + tf.square(tf.div(normy, sy)) - 2 * tf.div(
+            tf.multiply(rho, tf.multiply(normx, normy)), sxsy)
         negRho = 1 - tf.square(rho)
         # Numerator
-        result = tf.exp(tf.div(-z, 2*negRho))
+        result = tf.exp(tf.div(-z, 2 * negRho))
         # Normalization constant
         denom = 2 * np.pi * tf.multiply(sxsy, tf.sqrt(negRho))
         # Final PDF calculation
         result = tf.div(result, denom)
         return result
 
-    def get_social_tensor(self, grid_frame_data, grid_size = self.grid_size):
+    def get_social_tensor(self, grid_frame_data, grid_size):
         '''
         Computes the social tensor for all the max_num_peds in the frame
         params:
@@ -214,11 +228,11 @@ class SocialLSTMModel:
         output_states : A list of tensors each of shape 1 x RNN_size of length MNP
         '''
         # Create a zero tensor of shape MNP x (GS**2) x RNN_size
-        social_tensor = tf.zeros([self.args.max_num_peds, grid_size*grid_size, self.lstm_num], name="social_tensor")
+        social_tensor = tf.zeros([self.args.max_num_peds, grid_size * grid_size, self.lstm_num * 2], name="social_tensor")
         # Create a list of zero tensors each of shape 1 x (GS**2) x RNN_size of length MNP
         social_tensor = tf.split(social_tensor, self.args.max_num_peds, axis=0)
         # Concatenate list of hidden states to form a tensor of shape MNP x RNN_size
-        hidden_states = tf.concat(self.output_states, axis=0)
+        hidden_states = tf.concat(self.initial_states, axis=0)
         # Split the grid_frame_data into grid_data for each pedestrians
         # Consists of a list of tensors each of shape 1 x MNP x (GS**2) of length MNP
         grid_frame_ped_data = tf.split(grid_frame_data, self.args.max_num_peds, axis=0)
@@ -230,25 +244,24 @@ class SocialLSTMModel:
             # Compute social tensor for the current pedestrian
             with tf.name_scope("tensor_calculation"):
                 social_tensor_ped = tf.matmul(tf.transpose(grid_frame_ped_data[ped]), hidden_states)
-                social_tensor[ped] = tf.reshape(social_tensor_ped, [1, grid_size*grid_size, self.lstm_num])
+                social_tensor[ped] = tf.reshape(social_tensor_ped, [1, grid_size * grid_size, self.lstm_num * 2])
 
         # Concatenate the social tensor from a list to a tensor of shape MNP x (GS**2) x RNN_size
         social_tensor = tf.concat(social_tensor, axis=0)
         # Reshape the tensor to match the dimensions MNP x (GS**2 * RNN_size)
-        social_tensor = tf.reshape(social_tensor, [self.args.max_num_peds, self.grid_size*self.grid_size*self.lstm_num])
+        social_tensor = tf.reshape(social_tensor,
+                                   [self.args.max_num_peds, self.grid_size * self.grid_size * self.lstm_num * 2])
         return social_tensor
-
 
     # the new function for getting spatial pyramid
     def get_social_tensor_spatial_pyramid(self, grid_frame_data):
 
-        social_spatial = get_social_tensor(grid_frame_data, self.grid_size)
+        social_spatial = self.get_social_tensor(grid_frame_data, 1)
 
         for i in {2, 4}:
-            social_spatial += get_social_tensor(grid_frame_data, i * self.grid_size)
+            social_spatial += self.get_social_tensor(grid_frame_data, i * self.grid_size)
 
         return social_spatial
-
 
     def sample_gaussian_2d(self, mux, muy, sx, sy, rho):
         '''
@@ -263,7 +276,7 @@ class SocialLSTMModel:
         # Extract mean
         mean = [mux, muy]
         # Extract covariance matrix
-        cov = [[sx*sx, rho*sx*sy], [rho*sx*sy, sy*sy]]
+        cov = [[sx * sx, rho * sx * sy], [rho * sx * sy, sy * sy]]
         # Sample a point from the multivariate normal distribution
         x = np.random.multivariate_normal(mean, cov, 1)
         return x[0][0], x[0][1]
@@ -277,10 +290,12 @@ class SocialLSTMModel:
         # For each frame in the sequence
         for index, frame in enumerate(traj[:-1]):
             data = np.reshape(frame, (1, self.max_num_peds, 3))
-            target_data = np.reshape(traj[index+1], (1, self.max_num_peds, 3))
-            grid_data = np.reshape(grid[index, :], (1, self.max_num_peds, self.max_num_peds, self.grid_size*self.grid_size))
+            target_data = np.reshape(traj[index + 1], (1, self.max_num_peds, 3))
+            grid_data = np.reshape(grid[index, :],
+                                   (1, self.max_num_peds, self.max_num_peds, self.grid_size * self.grid_size))
 
-            feed = {self.input_data: data, self.LSTM_states: states, self.grid_data: grid_data, self.target_data: target_data}
+            feed = {self.input_data: data, self.LSTM_states: states, self.grid_data: grid_data,
+                    self.target_data: target_data}
 
             [states, cost] = sess.run([self.final_states, self.cost], feed)
             # print cost
@@ -290,13 +305,15 @@ class SocialLSTMModel:
         last_frame = traj[-1]
 
         prev_data = np.reshape(last_frame, (1, self.max_num_peds, 3))
-        prev_grid_data = np.reshape(grid[-1], (1, self.max_num_peds, self.max_num_peds, self.grid_size*self.grid_size))
+        prev_grid_data = np.reshape(grid[-1],
+                                    (1, self.max_num_peds, self.max_num_peds, self.grid_size * self.grid_size))
 
         prev_target_data = np.reshape(true_traj[traj.shape[0]], (1, self.max_num_peds, 3))
         # Prediction
         for t in range(num):
             # print "**** NEW PREDICTION TIME STEP", t, "****"
-            feed = {self.input_data: prev_data, self.LSTM_states: states, self.grid_data: prev_grid_data, self.target_data: prev_target_data}
+            feed = {self.input_data: prev_data, self.LSTM_states: states, self.grid_data: prev_grid_data,
+                    self.target_data: prev_target_data}
             [output, states, cost] = sess.run([self.final_output, self.final_states, self.cost], feed)
             # print "Cost", cost
             # Output is a list of lists where the inner lists contain matrices of shape 1x5. The outer list contains only one element (since seq_length=1) and the inner list contains max_num_peds elements
@@ -324,4 +341,3 @@ class SocialLSTMModel:
 
         # The returned ret is of shape (obs_length+pred_length) x max_num_peds x 3
         return ret
-

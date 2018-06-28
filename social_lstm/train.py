@@ -16,8 +16,6 @@ def main():
     parser.add_argument("--seq_length", type=int, default=12,
                         help="RNN sequence length")
     parser.add_argument("--num_epochs", type=int, default=20)
-    parser.add_argument("--save_freq", type=int, default=400,
-                        help="save every")
     parser.add_argument('--gradient_clip', type=float, default=10.,
                         help='clip gradients at this value')
     parser.add_argument('--learning_rate', type=float, default=0.005,
@@ -58,6 +56,7 @@ def train(args):
         if ckpt and ckpt.model_checkpoint_path:
             saver.restore(sess, ckpt.model_checkpoint_path)
 
+        # get network parameter number
         from functools import reduce
         from operator import mul
 
@@ -68,6 +67,8 @@ def train(args):
                 num_params += reduce(mul, [dim.value for dim in shape], 1)
             return num_params
         print("param count: ", get_num_params())
+
+        # Train
         best_validate_loss = 100
         best_epoch = 0
 
@@ -85,8 +86,8 @@ def train(args):
                 # Tic
                 start = time.time()
 
-                # Get the source, target and dataset data for the next batch
-                # x, y are input and target data which are lists containing numpy arrays of size seq_length x maxNumPeds x 3
+                # Get the source, target and dataset data for the next batch x, y are input and target data which are
+                # lists containing numpy arrays of size seq_length x maxNumPeds x 3
                 x, y = data_loader.next_training_batch()
 
                 # variable to store the loss for this batch
@@ -106,13 +107,14 @@ def train(args):
 
                     # Feed the source, target data
                     feed = {model.input_data: x_batch, model.target_data: y_batch, model.grid_data: grid_batch}
+                    train_loss, _, = sess.run([model.cost, model.train_op], feed)
 
-                    train_loss, _, o_mux, o_muy, o_sx, o_sy, o_corr = \
-                        sess.run([model.cost, model.train_op, model.o_mux, model.o_muy, model.o_sx, model.o_sy, model.o_corr], feed)
+                    # train_loss, _, o_mux, o_muy, o_sx, o_sy, o_corr = \
+                    #     sess.run([model.cost, model.train_op, model.o_mux, model.o_muy, model.o_sx, model.o_sy, model.o_corr], feed)
 
-                    if batch % 6 == 0:
-                        print("predicted:", o_mux, ", ", o_muy, ", ", o_sx, ", ", o_sy, ", ", o_corr)
-                        print("correct:", y_batch)
+                    # if batch % 6 == 0:
+                    #     print("predicted:", o_mux, ", ", o_muy, ", ", o_sx, ", ", o_sy, ", ", o_corr)
+                    #     print("correct:", y_batch)
 
                     loss_batch += train_loss
 
@@ -125,12 +127,6 @@ def train(args):
                         args.num_epochs * data_loader.num_training_batch,
                         e,
                         loss_batch, end - start))
-
-                # Save the model if the current epoch and batch number match the frequency
-                # if (e * data_loader.num_training_batch + b) % args.save_freq == 0 and ((e * data_loader.num_training_batch + b) > 0):
-                #     checkpoint_path = os.path.join('save', 'social_model.ckpt')
-                #     saver.save(sess, checkpoint_path, global_step=e * data_loader.num_training_batch + b)
-                #     print("model saved to {}".format(checkpoint_path))
 
             loss_epoch /= data_loader.num_training_batch
 
@@ -176,13 +172,13 @@ def train(args):
                 best_validate_loss = loss_epoch
                 best_epoch = e
 
+                # Save the model after each epoch
+                checkpoint_path = os.path.join("save/", 'social_model.ckpt')
+                saver.save(sess, checkpoint_path, global_step=e)
+                print("model saved to {}".format(checkpoint_path))
+
             print('(epoch {}), valid_loss = {:.3f}'.format(e, loss_epoch))
             print('Best epoch', best_epoch, 'Best validation loss', best_validate_loss)
-
-            # Save the model after each epoch
-            checkpoint_path = os.path.join("save/", 'social_model.ckpt')
-            saver.save(sess, checkpoint_path, global_step=e)
-            print("model saved to {}".format(checkpoint_path))
 
 
 if __name__ == "__main__":
